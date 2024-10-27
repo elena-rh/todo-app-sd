@@ -29,5 +29,5 @@ jobs:
         with:
           context: ./
           tags: |
-            matteocastellucci3/nodeapp:latest
+            elenarughi2/nodeapp:latest
           push: true
