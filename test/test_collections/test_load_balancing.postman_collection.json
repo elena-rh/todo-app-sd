@@ -1,0 +1,304 @@
+{
+	"info": {
+		"_postman_id": "d4e9f1fd-d314-4702-85ab-be5e92281eda",
+		"name": "test_load_balancing",
+		"description": "Test NGINX load balancing capabilities:\n\n- 6 client requests with different `X-Forwarded-For` headers to simulate different clients\n    \n    - headers set in pre-request script\n        \n- verify that NGINX distributes requests among the two available services\n    \n\nNGINX is configured to choose services by applying a hash function to the remote address + the address indicated by the `X-Forwarded-For` header(optional).\n\nThe hash function is fixed, so the tests can be replicated.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "14818580"
+	},
+	"item": [
+		{
+			"name": "from localhost",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let proxyServer = pm.response.headers.get(\"ProxyServer\");",
+							"pm.collectionVariables.get('proxyServers').push(proxyServer);",
+							"",
+							"console.log(\"Client XFF address: none\");",
+							"console.log(\"Proxy server address: \" + proxyServer);",
+							"",
+							"// if possible, get next client IP to mock and send request",
+							"if (pm.collectionVariables.get('ips').length > 0) {",
+							"    let tmp = pm.collectionVariables.get('ips');",
+							"    let ip = tmp.shift();",
+							"    pm.collectionVariables.set('ips', tmp);",
+							"    pm.collectionVariables.set('ip', ip);",
+							"    pm.execution.setNextRequest(\"loopRequest\");",
+							"}",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"pm.collectionVariables.clear;",
+							"",
+							"// accumulate list of addresses of proxy servers that have responded",
+							"const proxyServers = [];",
+							"pm.collectionVariables.set('proxyServers', proxyServers);",
+							"",
+							"// IP addresses for simulating requests from different clients with different addresses",
+							"const ips = ['93.32.254.205', '208.72.181.27', '15.217.59.4', '214.63.144.180', '152.170.53.232',",
+							"                '221.28.41.217', '198.152.187.15', '48.211.192.203', '92.179.200.165', '209.125.241.221'];",
+							"pm.collectionVariables.set('ips', ips);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Host",
+						"value": "localhost:9000"
+					},
+					{
+						"key": "User-Agent",
+						"value": "Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0"
+					},
+					{
+						"key": "Accept",
+						"value": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+					},
+					{
+						"key": "Accept-Language",
+						"value": "en-US,en;q=0.5"
+					},
+					{
+						"key": "Accept-Encoding",
+						"value": "gzip, deflate, br, zstd"
+					},
+					{
+						"key": "DNT",
+						"value": "1"
+					},
+					{
+						"key": "Sec-GPC",
+						"value": "1"
+					},
+					{
+						"key": "Connection",
+						"value": "keep-alive"
+					},
+					{
+						"key": "Cookie",
+						"value": "cookie=s%3ApnA8ZVwa8vuD-Z21xhnx0M8LT2I-bCL4.MhFRkTcnyUq%2BczQ%2FNV2vU%2ByQ1Ceg6c%2F45YJnUKH%2FS0A"
+					},
+					{
+						"key": "Upgrade-Insecure-Requests",
+						"value": "1"
+					},
+					{
+						"key": "Sec-Fetch-Dest",
+						"value": "document"
+					},
+					{
+						"key": "Sec-Fetch-Mode",
+						"value": "navigate"
+					},
+					{
+						"key": "Sec-Fetch-Site",
+						"value": "none"
+					},
+					{
+						"key": "Sec-Fetch-User",
+						"value": "?1"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:9000/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9000",
+					"path": [
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "loopRequest",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"let proxyServer = pm.response.headers.get(\"ProxyServer\");",
+							"let tmpProxyServers = pm.collectionVariables.get('proxyServers')",
+							"tmpProxyServers.push(proxyServer);",
+							"pm.collectionVariables.set('proxyServers', tmpProxyServers);",
+							"",
+							"console.log(\"Client XFF address: \" + pm.request.headers.get('X-Forwarded-For'));",
+							"console.log(\"Proxy server address: \" + proxyServer);",
+							"",
+							"// if possible, get next client IP to mock and send request",
+							"if (pm.collectionVariables.get('ips').length > 0) {",
+							"    let tmp = pm.collectionVariables.get('ips');",
+							"    let ip = tmp.shift();",
+							"    pm.collectionVariables.set('ips', tmp);",
+							"    pm.collectionVariables.set('ip', ip);",
+							"    pm.execution.setNextRequest(\"loopRequest\");",
+							"} else { // check that more than one proxy server has been contacted",
+							"    let proxyServersMap = new Map();",
+							"    pm.collectionVariables.get('proxyServers').forEach(",
+							"        ps => proxyServersMap.set(ps, 1 + (proxyServersMap.get(ps) ?? 0)));",
+							"    pm.test(\"Load balancer: client requests redirected to more than one server.\", function() {",
+							"        pm.expect(proxyServersMap.size).to.be.above(1);",
+							"    });",
+							"}",
+							"",
+							"",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"pm.request.headers.upsert({",
+							"        key: 'X-Forwarded-For',",
+							"        value: pm.collectionVariables.get('ip')",
+							"    });"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Host",
+						"value": "localhost:9000"
+					},
+					{
+						"key": "User-Agent",
+						"value": "Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0"
+					},
+					{
+						"key": "Accept",
+						"value": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+					},
+					{
+						"key": "Accept-Language",
+						"value": "en-US,en;q=0.5"
+					},
+					{
+						"key": "Accept-Encoding",
+						"value": "gzip, deflate, br, zstd"
+					},
+					{
+						"key": "DNT",
+						"value": "1"
+					},
+					{
+						"key": "Sec-GPC",
+						"value": "1"
+					},
+					{
+						"key": "Connection",
+						"value": "keep-alive"
+					},
+					{
+						"key": "Cookie",
+						"value": "cookie=s%3ApnA8ZVwa8vuD-Z21xhnx0M8LT2I-bCL4.MhFRkTcnyUq%2BczQ%2FNV2vU%2ByQ1Ceg6c%2F45YJnUKH%2FS0A"
+					},
+					{
+						"key": "Upgrade-Insecure-Requests",
+						"value": "1"
+					},
+					{
+						"key": "Sec-Fetch-Dest",
+						"value": "document"
+					},
+					{
+						"key": "Sec-Fetch-Mode",
+						"value": "navigate"
+					},
+					{
+						"key": "Sec-Fetch-Site",
+						"value": "none"
+					},
+					{
+						"key": "Sec-Fetch-User",
+						"value": "?1"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:9000/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9000",
+					"path": [
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					"pm.test(\"Status code is 200\", function () {",
+					"    pm.response.to.have.status(200);",
+					"});",
+					"",
+					"pm.test(\"Response time is less than 200ms\", function () {",
+					"    pm.expect(pm.response.responseTime).to.be.below(200);",
+					"});",
+					"",
+					"pm.test(\"ProxyServer is present\", function () {",
+					"    pm.response.to.have.header(\"ProxyServer\");",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "proxyServers",
+			"value": ""
+		},
+		{
+			"key": "ips",
+			"value": ""
+		},
+		{
+			"key": "ip",
+			"value": ""
+		}
+	]
+}

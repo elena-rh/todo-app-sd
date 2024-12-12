@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node ./test/test_load_balancing.js"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +16,7 @@
     "express-session": "1.17.2",
     "lodash": "4.17.21",
     "mongoose": "6.1.5",
+    "newman": "^6.2.1",
     "node-cron": "3.0.0",
     "node-schedule": "2.1.0",
     "otp-generator": "4.0.0",
