@@ -1,6 +1,6 @@
 services:
     nginx:
-        image: SDproject/nginx:latest
+        image: elenarughi2/sd_nginx:latest
         container_name: nginx
         hostname: nginx
         ports:
@@ -11,7 +11,7 @@ services:
             - nodeapp1
             - nodeapp2
     nodeapp1:
-        image: SDproject/nodeapp:latest
+        image: elenarughi2/sd_nodeapp:latest
         container_name: nodeapp1
         hostname: nodeapp
         command: ["nodejs", "index.js", "mongodb://mongodb1:27017,mongodb2:27017,mongodb3:27017/todo?replicaSet=rs&serverSelectionTimeoutMS=60000", "true"]
@@ -22,7 +22,7 @@ services:
             - mongodb2
             - mongodb3
     nodeapp2:
-        image: SDproject/nodeapp:latest
+        image: elenarughi2/sd_nodeapp:latest
         container_name: nodeapp2
         hostname: nodeapp
         command: [ "nodejs", "index.js", "mongodb://mongodb1:27017,mongodb2:27017,mongodb3:27017/todo?replicaSet=rs&serverSelectionTimeoutMS=60000", "false" ]
@@ -34,7 +34,7 @@ services:
             - mongodb3
             - nodeapp1
     mongodb1:
-        image: SDproject/mongodb:latest
+        image: elenarughi2/sd_mongodb:latest
         container_name: mongodb1
         hostname: mongodb1
         command: [ "--replSet", "rs", "--bind_ip_all" ]
@@ -45,14 +45,14 @@ services:
         networks:
             - nodeapp_network
     mongodb2:
-        image: SDproject/mongodb:latest
+        image: elenarughi2/sd_mongodb:latest
         container_name: mongodb2
         hostname: mongodb2
         command: ["--replSet", "rs", "--bind_ip_all"]
         networks:
             - nodeapp_network
     mongodb3:
-        image: SDproject/mongodb:latest
+        image: elenarughi2/sd_mongodb:latest
         container_name: mongodb3
         hostname: mongodb3
         command: ["--replSet", "rs", "--bind_ip_all"]
