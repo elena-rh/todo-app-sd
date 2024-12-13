@@ -1,20 +1,25 @@
 SHELL=/bin/bash
 
-NODEAPP_IMAGE=nodeapp
-MONGODB_IMAGE=mongodb
+REPO=elenarughi2
+NODEAPP_IMAGE=sd_nodeapp
+NGINX_IMAGE=sd_nginx
+MONGODB_IMAGE=sd_mongodb
 
 MONGODB_DOCKERFILE_PATH=./docker-mongodb
+NGINX_DOCKERFILE_PATH=./nginx
  
 all: build up 
  
 .PHONY: build up down clean
  
 build:  
-	docker build -t matteocastellucci3/${NODEAPP_IMAGE}:latest .
-	cd ${MONGODB_DOCKERFILE_PATH}; docker build -t matteocastellucci3/${MONGODB_IMAGE}:latest .
+	docker build -t ${REPO}/${NODEAPP_IMAGE}:latest --build-arg dbinit=true .
+	cd ${MONGODB_DOCKERFILE_PATH}; docker build -t ${REPO}/${MONGODB_IMAGE}:latest .
+	cd ../
+	cd ${NGINX_DOCKERFILE_PATH}; docker build -t ${REPO}/${NGINX_IMAGE}:latest .
  
 up: 
-	docker compose up | grep ${NODEAPP_IMAGE}
+	docker compose up | grep 'nodeapp'
 
 down:
 	docker compose down

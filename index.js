@@ -21,8 +21,10 @@ global.store = new MongoDBStore({
     uri: process.argv[2] ?? "mongodb://127.0.0.1:27017,127.0.0.1:27018,127.0.0.1:27019/todo?replicaSet=rs",
     collection: "sessions"
 });
+app.enable('trust proxy');
 app.use(session({
     secret: "test",
+    proxy: true,
     resave: false,
     saveUninitialized: true,
     unset: "destroy",
