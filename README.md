@@ -2,6 +2,9 @@
 
 This repository hosts the project for the "Distributed Systems" course; this solo submission consists of the addition of server replication via NGINX to [the project that was previously developed](https://github.com/cake-lier/todo-app) as a team for another exam.
 
+Here is a [youtube video](https://youtu.be/BNP5S8RFmKg) in which I showcase the use of the NGINX server in this application.
+
+
 From the [README](https://github.com/cake-lier/todo-app/blob/main/README.md) of the original project:
 
 
